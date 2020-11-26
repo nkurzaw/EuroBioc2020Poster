@@ -66,6 +66,7 @@
   keywordstyle=\color{blue},      % keyword style
   stringstyle=\color{green},      % string literal style
   xleftmargin=0.5cm,
+  xrightmargin=0.5cm
 }
 % Create command for highlighting inline code or variables
 \newcommand{\hcode}[2][lgray]{{\ttfamily\color{vdgray}\colorbox{#1}{#2}}}
@@ -131,18 +132,17 @@
       %\hspace{1cm}
       \noindent
       \textbf{Bioconductor packages for analysis of Thermal Proteome Profiling data} \\
-      \vspace{0.1cm} \\
+      \vspace{0.05cm} \\
       % Authors
-      \Large Nils Kurzawa$^{*,1}$, Dorothee Childs$^{1,2}$, Holger Franken$^2$, Mikhail M. Savitski$^1$ \& Wolfgang Huber$^1$ \\
-      \vspace{0.1cm} \\
+      \Large Nils Kurzawa$^{1,*}$, Dorothee Childs$^{1,2}$, Holger Franken$^2$, Mikhail M. Savitski$^1$ \& Wolfgang Huber$^1$ \\
+      \vspace{0.05cm} \\
       % Affiliation
       \Large \textit{$^1$Genome Biology Unit, European Molecular Biology Laboratory} \\
       \Large \textit{$^2$Cellzome GmbH, GlaxoSmithKline} \\
-      \vspace{0.1cm} \\
+      \vspace{0.05cm} \\
       % email
-      \vspace{0.4cm}
+      %\vspace{0.4cm}
       \normalsize $^*$contact: nils.kurzawa@embl.de \\
-      \hspace{1cm}
     %\end{center}
   \end{minipage}
   %&
@@ -175,10 +175,10 @@
       was released, which implemented function to infer ligand-protein interactions
       using shifts of melting points. The realization that this procedure 
       lacks sensitivity to detect proteins with e.g. very high thermal stability lead 
-      to the development of the \hcode{NPARC} package. \\
+      to the development of the \hcode{NPARC} package. 
       Further, it was realized that TPP data can also inform on protein-protein 
       interaction (PPI) dynamics. Another Bioconductor package \hcode{Rtpca} was thus implemented
-      to accomodate respective analyses. \\
+      to accomodate respective analyses. 
       Lastly, the experimental setup of TPP experiments was expanded to profile ligand
       dose and temperature ranges together to improve sensitivity. To accomodate the 
       different data structure and different required statistical analysis the package
@@ -216,7 +216,7 @@
 \begin{multicols}{2}
 
 % ---------------------------------------------------------------------------
-% SCP technology
+% The TPP technology
 \noindent
 \begin{minipage}[t]{\linewidth}
   \vspace{0.5cm}
@@ -230,17 +230,17 @@
   \includegraphics[width=\linewidth]{figs/2d-tpp_schematic.png}
 \end{minipage}
 
-\vspace{-2cm}
+%\vspace{-2cm}
 % ---------------------------------------------------------------------------
-% TPP package
+% TPP 
 \noindent
 \begin{minipage}[t]{\linewidth}
-  \vspace{0.5cm}
+  \vspace{0.55cm}
   \section*{\huge TPP-TR analysis with \hcode{TPP}}
   Melting point-centric data analysis.
-  %\centering
-  %\includegraphics[width=0.7\linewidth]{figs/SCP_framework.pdf}
-
+  \begin{center}
+  \includegraphics[width=\linewidth]{figs/tpp-tr_example.png}
+  \end{center}
   \textbf{Features of the \hcode{TPP} package}:
 
   \begin{itemize}
@@ -307,66 +307,14 @@
 \end{minipage}
 
 
+
 % ---------------------------------------------------------------------------
-% Batch effects
+% TPP2D
 \noindent
 \begin{minipage}[t]{\linewidth}
-  \vspace{0.5cm}
-  \section*{\huge Batch effects}
-
-  Batch effects are inherent to SCP data since many samples have to 
-  be distributed across \textbf{different MS runs}. 
-  
-  \begin{itemize}
-    \item Multiplexed acquisition: 1 run $\sim$ 4-10 cells
-    \item Label-free acquisition: 1 batch = 1 cell
-  \end{itemize}
-  
-  Batch effects impact the peptide \textbf{identification} 
-  (missingness) and \textbf{quantification}
-
-  \begin{tabular}{p{0.4\linewidth} p{0.4\linewidth}}
-    \vspace{0pt} \includegraphics[width=\linewidth]{figs/batch_effects.png} &
-    \vspace{0pt} \includegraphics[width=\linewidth]{figs/PCA_batch_effect.png}
-  \end{tabular}
-  
-\end{minipage}
-
-
-% ---------------------------------------------------------------------------
-% Missingness
-\noindent
-\vspace{-1cm}
-\section*{\huge Missingness}
-\begin{minipage}[h]{0.35\linewidth}
-  
-  \begin{itemize}
-    \item \textbf{Biological missingness}: some proteins are not 
-    expressed in all cells
-    \item \textbf{Technical missingness}: low amounts of sample 
-    material, instrument sensitivity and batch effects
-    \item \textbf{Both}: some proteins are harder to identify (low 
-    expression) in one cell type
-  \end{itemize}
-  
-  \includegraphics[width=1.2\linewidth]{figs/missing_cell.png}
-
-\end{minipage}\hspace{0.45cm}
-\begin{minipage}[h]{0.6\linewidth}
-  \includegraphics[width=\linewidth]{figs/missing_peptide.png}
-  
-\end{minipage}
-
-
-% ---------------------------------------------------------------------------
-% Reproducibility 
-\noindent
-\begin{minipage}[t]{\linewidth}
-  \section*{\huge Reproducibility}
-  
-  \hcode{scp} provides a \textbf{standardized} pipeline for 
-  \textbf{unified} and \textbf{reproducible} analysis of SCP data. We 
-  used \hcode{scp} to reproduce 2 published analyses:
+  \vspace{0.55cm}
+  \section*{\huge 2D-TPP data analysis with \hcode{TPP2D}}
+  FDR-controlled detection of ligand-protein interactions from 2D thermal profiles.
   
   \begin{itemize}
     \item The analysis by Specht et al. \cite{Specht2020-jm}: 
@@ -390,7 +338,7 @@
 % ---------------------------------------------------------------------------
 % Additional notes
 \noindent
-This work is funded by EMBL. The poster is available at {\color{blue}
+This work was funded by EMBL and GSK. The poster is available at {\color{blue}
 {https://github.com/nkurzaw/EuroBioc2020Poster}}.
 
 % ---------------------------------------------------------------------------
