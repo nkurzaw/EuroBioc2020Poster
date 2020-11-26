@@ -1,0 +1,83 @@
+---
+title: "Schematic `TPP` TPP-TR analysis figure"
+output:
+    rmarkdown::github_document
+---
+    
+```{r opts, echo=FALSE}
+knitr::opts_chunk$set(
+    fig.path = "md_files/tpp_tpp-tr/"
+)
+```
+
+```{r setup}
+library(TPP)
+library(tidyverse)
+
+theme_poster <- theme_bw(base_size = 6) +
+  theme(legend.background = element_blank(), 
+        legend.key = element_blank(), 
+        panel.background = element_blank(), 
+        panel.grid.major = element_line(colour = "grey92", 
+                                        size = 0.25),
+        panel.grid.minor = element_line(colour = "grey92", 
+                                        size = 0.15),
+        panel.border = element_blank(), 
+        strip.background = element_blank(), 
+        plot.background = element_blank(), 
+        complete = TRUE,
+        axis.line = element_line(color = "black", size = 0.25),
+        text = element_text(size = 8),
+        axis.ticks = element_line(color = "black", size = 0.25),
+        axis.title = element_text(size = 8),
+        axis.text = element_text(size = 8),
+        legend.text = element_text(size = 8))
+```
+
+```{r getData, fig.width=5, fig.asp=0.45}
+data("hdacTR_smallExample")
+
+temperature_anno <- 
+    hdacTR_config[1,5:14] %>% 
+    gather(key, temperature)
+
+trData <- tpptrImport(configTable = hdacTR_config, 
+                      data = hdacTR_data)
+
+trDataNorm <- tpptrNormalize(trData, qcPlotTheme = theme_poster)
+
+hdac6_df <- bind_rows(
+    lapply(names(trDataNorm$normData), function(nm){
+        biobroom::tidy.ExpressionSet(trDataNorm$normData[[nm]]) %>% 
+            filter(gene == "HDAC6") %>% 
+            mutate(id = nm)
+    })
+) %>% 
+    mutate(key = gsub("rel_fc_", "", sample),
+           Replicate = gsub(".+_", "", id),
+           Condition = gsub("_.+", "", id)) %>% 
+    left_join(temperature_anno, by = "key")
+
+ggplot(hdac6_df, aes(temperature, value)) +
+    geom_point(aes(color = Condition, shape = Replicate)) +
+    geom_smooth(aes(group = id),
+              color = c(rep("firebrick", 160),
+                        rep("gray", 160)),
+              method = "nls", se = FALSE,
+              formula = y ~ (1-a)/(1 + exp(-(b/x - c))) + a,
+              method.args = list(start = c(a = 0, b = 550, c = 10),
+                                 algorithm = 'port'),
+              alpha = 0.25, size = 0.5) +
+    geom_segment(x = 49.25, xend = 52.25, y = 0.5, yend = 0.5, 
+                 arrow = arrow(length = unit(0.03, "npc"))) +
+    geom_segment(x = 52.25, xend = 49.25, y = 0.5, yend = 0.5, 
+                 arrow = arrow(length = unit(0.03, "npc"))) +
+    scale_color_manual(values = c("firebrick", "gray")) +
+    labs(x = expression("Temperature"* " " * "("*~degree*C*")"),
+         y = "Fraction non-denatured") +
+    theme_poster 
+
+ggsave(filename = "tpp-tr_example.pdf", width = 5, 
+       height = 2.25, units = "in")
+```
+
