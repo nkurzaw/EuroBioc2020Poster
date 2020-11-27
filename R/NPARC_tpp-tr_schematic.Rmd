@@ -1,0 +1,204 @@
+---
+title: "Schematic `NPARC` TPP-TR analysis figure"
+output:
+    rmarkdown::github_document
+---
+    
+```{r opts, echo=FALSE}
+knitr::opts_chunk$set(
+    fig.path = "md_files/nparc_tpp-tr/"
+)
+```
+
+```{r setup}
+library(TPP)
+library(NPARC)
+library(tidyverse)
+library(BiocParallel)
+
+theme_poster <- theme_bw(base_size = 6) +
+  theme(legend.background = element_blank(), 
+        legend.key = element_blank(), 
+        panel.background = element_blank(), 
+        panel.grid.major = element_line(colour = "grey92", 
+                                        size = 0.25),
+        panel.grid.minor = element_line(colour = "grey92", 
+                                        size = 0.15),
+        panel.border = element_blank(), 
+        strip.background = element_blank(), 
+        plot.background = element_blank(), 
+        complete = TRUE,
+        axis.line = element_line(color = "black", size = 0.25),
+        text = element_text(size = 8),
+        axis.ticks = element_line(color = "black", size = 0.25),
+        axis.title = element_text(size = 8),
+        axis.text = element_text(size = 8),
+        legend.text = element_text(size = 8))
+```
+
+```{r getData, fig.width=5, fig.asp=0.45}
+data("hdacTR_smallExample")
+
+temperature_anno <- 
+    hdacTR_config[1,5:14] %>% 
+    gather(key, temperature)
+
+trData <- tpptrImport(configTable = hdacTR_config, 
+                      data = hdacTR_data)
+
+trDataNorm <- tpptrNormalize(trData, qcPlotTheme = theme_poster)
+
+hdac6_df <- bind_rows(
+    lapply(names(trDataNorm$normData), function(nm){
+        biobroom::tidy.ExpressionSet(trDataNorm$normData[[nm]]) %>% 
+            filter(gene == "HDAC6") %>% 
+            mutate(id = nm)
+    })
+) %>% 
+    mutate(key = gsub("rel_fc_", "", sample),
+           Replicate = gsub(".+_", "", id),
+           Condition = gsub("_.+", "", id)) %>% 
+    left_join(temperature_anno, by = "key") 
+
+control <-  NPARC:::getParams()
+hdac6_null_fit_param <- NPARC:::invokeParallelFits(
+    x = hdac6_df$temperature, 
+    y = hdac6_df$value, 
+    id = hdac6_df$gene, 
+    groups = NULL,
+    BPPARAM = SerialParam(progressbar = TRUE),
+    maxAttempts = control$maxAttempts,
+    returnModels = FALSE,
+    start = control$start)
+
+hdac6_null_rss <- sum(hdac6_null_fit_param$modelMetrics$rss)
+
+temp_range <- seq(from = 37, to = 68, by = 0.1)
+
+hdac6_null_fit_df <- 
+    tibble(temperature = temp_range,
+           group = rep(
+               unique(hdac6_df$gene),
+               each = length(temp_range)),
+           id = "HDAC6") %>% 
+    left_join(hdac6_null_fit_param$modelMetrics, 
+              by = "id") %>% 
+    rowwise() %>% 
+    mutate(y_hat = (1 - pl)  / (1 + exp((b - a/temperature))) + pl) %>% 
+    ungroup
+
+hdac6_alt_fit_param <- NPARC:::invokeParallelFits(
+    x = hdac6_df$temperature, 
+    y = hdac6_df$value, 
+    id = hdac6_df$gene, 
+    groups = hdac6_df$Condition,
+    BPPARAM = SerialParam(progressbar = TRUE),
+    maxAttempts = control$maxAttempts,
+    returnModels = FALSE,
+    start = control$start)
+
+hdac6_alt_rss <- sum(hdac6_alt_fit_param$modelMetrics$rss)
+
+hdac6_alt_fit_df <- 
+    tibble(temperature = rep(temp_range, 2),
+           group = rep(
+               unique(hdac6_df$Condition),
+               each = length(temp_range)
+           )) %>% 
+    left_join(hdac6_alt_fit_param$modelMetrics, 
+              by = "group") %>% 
+    rowwise() %>% 
+    mutate(y_hat = (1 - pl)  / (1 + exp((b - a/temperature))) + pl) %>% 
+    ungroup
+
+x_label <- expression("Temperature"* " " * "("*~degree*C*")")
+y_label <- "Fraction non-denatured"
+
+null_plot <- 
+    ggplot(hdac6_null_fit_param$modelPredictions %>% 
+               mutate(group = hdac6_df$Condition), 
+           aes(x, y)) +
+    geom_point(aes(color = group)) +
+    geom_segment(aes(xend = x, yend = .fitted), 
+                 linetype = "dashed") +
+    geom_line(aes(temperature, y_hat), 
+              data = hdac6_null_fit_df,
+              color = "darkgray") +
+    geom_text(data = tibble(),
+              aes(x = 60, y = 0.95),
+                  label = as.expression(
+                    bquote('RSS'^0 == .(round(
+                        hdac6_null_rss, 3))))) +
+    scale_color_manual("", values = c("firebrick", "gray")) +
+    labs(x = x_label,
+         y = y_label) +
+    ggtitle("Null model") +
+    theme(legend.position = "bottom")
+
+alt_plot <- 
+    ggplot(hdac6_alt_fit_param$modelPredictions, 
+       aes(x, y)) +
+    geom_point(aes(color = group)) +
+    geom_segment(aes(xend = x, yend = .fitted), 
+                 linetype = "dashed") +
+    geom_line(aes(temperature, y_hat, color = group), 
+              data = hdac6_alt_fit_df) +
+    geom_text(data = tibble(),
+              aes(x = 60, y = 0.95),
+                  label = as.expression(
+                    bquote('RSS'^1 == .(round(
+                        hdac6_alt_rss, 3))))) +
+    scale_color_manual("", values = c("firebrick", "gray")) +
+    labs(x = x_label,
+         y = y_label) +
+    ggtitle("Alternative model") +
+    theme(legend.position = "bottom")
+
+```
+
+Run full NPARC analysis to obtain volcano plot
+
+```{r nparc}
+full_df <- bind_rows(
+    lapply(names(trDataNorm$normData), function(nm){
+        biobroom::tidy.ExpressionSet(trDataNorm$normData[[nm]],
+                                     addPheno = TRUE) %>% 
+            mutate(id = nm)
+    })
+) %>% 
+    mutate(key = gsub("rel_fc_", "", sample),
+           Replicate = gsub(".+_", "", id),
+           Condition = gsub("_.+", "", id)) %>% 
+    dplyr::select(-sample, -label, -normCoeff, -id, -key) %>% 
+    group_by(gene) %>%
+    mutate(n = n()) %>%
+    ungroup() %>%
+    mutate(max_n = max(n)) %>% 
+    filter(n == max_n) %>%
+    dplyr::select(-n, -max_n)
+
+BPPARAM <- BiocParallel::MulticoreParam(
+    workers = 2, progressbar = FALSE)
+
+fits <- NPARCfit(x = full_df$temperature, 
+                 y = full_df$value, 
+                 id = full_df$gene, 
+                 groupsNull = NULL, 
+                 groupsAlt = full_df$Condition, 
+                 BPPARAM = BPPARAM,
+                 returnModels = FALSE)
+
+modelMetrics <- fits$metrics 
+fStats <- NPARCtest(modelMetrics, dfType = "empirical")
+
+nparc_volcano <- 
+    ggplot(fStats, aes(log2(rssDiff), -log10(pAdj))) +
+    geom_point(alpha = 0.25) +
+    geom_point(data = filter(fStats, pAdj < 0.1),
+               color = "red") +
+    ggrepel::geom_label_repel(
+        aes(label = id),
+        data = filter(fStats, id == "HDAC6"))
+```
+
+
