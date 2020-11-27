@@ -15,6 +15,7 @@ library(TPP)
 library(NPARC)
 library(tidyverse)
 library(BiocParallel)
+library(cowplot)
 
 theme_poster <- theme_bw(base_size = 6) +
   theme(legend.background = element_blank(), 
@@ -119,16 +120,17 @@ null_plot <-
                mutate(group = hdac6_df$Condition), 
            aes(x, y)) +
     geom_point(aes(color = group)) +
-    geom_segment(aes(xend = x, yend = .fitted), 
-                 linetype = "dashed") +
     geom_line(aes(temperature, y_hat), 
               data = hdac6_null_fit_df,
               color = "darkgray") +
-    geom_text(data = tibble(),
-              aes(x = 60, y = 0.95),
-                  label = as.expression(
-                    bquote('RSS'^0 == .(round(
-                        hdac6_null_rss, 3))))) +
+    # geom_text(data = tibble(),
+    #           aes(x = 60, y = 0.95),
+    #               label = as.expression(
+    #                 bquote('RSS'^0 == .(round(
+    #                     hdac6_null_rss, 3)))),
+    #           size = 2.5) +
+    geom_segment(aes(xend = x, yend = .fitted), 
+                 linetype = "dashed") +
     scale_color_manual("", values = c("firebrick", "gray")) +
     labs(x = x_label,
          y = y_label) +
@@ -139,15 +141,16 @@ alt_plot <-
     ggplot(hdac6_alt_fit_param$modelPredictions, 
        aes(x, y)) +
     geom_point(aes(color = group)) +
-    geom_segment(aes(xend = x, yend = .fitted), 
-                 linetype = "dashed") +
     geom_line(aes(temperature, y_hat, color = group), 
               data = hdac6_alt_fit_df) +
-    geom_text(data = tibble(),
-              aes(x = 60, y = 0.95),
-                  label = as.expression(
-                    bquote('RSS'^1 == .(round(
-                        hdac6_alt_rss, 3))))) +
+    # geom_text(data = tibble(),
+    #           aes(x = 60, y = 0.95),
+    #               label = as.expression(
+    #                 bquote('RSS'^1 == .(round(
+    #                     hdac6_alt_rss, 3)))),
+    #           size = 2.5) +
+    geom_segment(aes(xend = x, yend = .fitted), 
+                 linetype = "dashed") +
     scale_color_manual("", values = c("firebrick", "gray")) +
     labs(x = x_label,
          y = y_label) +
@@ -196,9 +199,39 @@ nparc_volcano <-
     geom_point(alpha = 0.25) +
     geom_point(data = filter(fStats, pAdj < 0.1),
                color = "red") +
-    ggrepel::geom_label_repel(
-        aes(label = id),
-        data = filter(fStats, id == "HDAC6"))
+    # geom_text(
+    #     data = tibble(x = -1.5, y = 4),
+    #     label = expression(''*italic(F)*'' == frac(('RSS'^0 - 'RSS'^1) * d[2], ('RSS'^1) * d[1])),
+    #     aes(x = x, y = y),
+    #     size = 2.5) +
+    geom_segment(
+        aes(x = log2(rssDiff) + 1.5, y = -log10(pAdj) - 0.5,
+            xend = log2(rssDiff) + 0.15, 
+            yend = -log10(pAdj) - 0.05),
+        arrow = arrow(length = unit(0.03, "npc")),
+        data = filter(fStats, id == "HDAC6")) +
+    ggtitle("Volcano plot") +
+    labs(x = expression('log'[2]~'('~'RSS'^0~' - '~'RSS'^1~')'),
+         y = expression('-log'[10]~'('*italic(p)*'-value)'))
 ```
 
+```{r fullPlot}
+melt_legend <- get_legend(null_plot)
+
+plot_grid(
+    plot_grid(
+        plot_grid(
+            null_plot + theme(legend.position = "none"), 
+            alt_plot + theme(legend.position = "none")), 
+        nparc_volcano,
+        rel_widths = c(2, 1),
+        ncol = 2),
+    plot_grid(melt_legend, NULL, 
+              ncol = 2, rel_widths = c(2, 1)),
+    ncol = 1, rel_heights = c(9, 1)
+)
+
+ggsave(filename = "nparc-tr_example.pdf", width = 5, 
+       height = 2.25, units = "in")
+```
 
