@@ -1,0 +1,165 @@
+---
+title: "Schematic `Rtpca` TPP-TR analysis figure"
+output:
+    rmarkdown::github_document
+---
+    
+```{r opts, echo=FALSE}
+knitr::opts_chunk$set(
+    fig.path = "md_files/rtpca_tpp-tr/"
+)
+```
+
+```{r setup}
+library(TPP)
+library(Rtpca)
+library(tidyverse)
+library(readxl)
+
+theme_poster <- theme_bw(base_size = 6) +
+  theme(legend.background = element_blank(), 
+        legend.key = element_blank(), 
+        panel.background = element_blank(), 
+        panel.grid.major = element_line(colour = "grey92", 
+                                        size = 0.25),
+        panel.grid.minor = element_line(colour = "grey92", 
+                                        size = 0.15),
+        panel.border = element_blank(), 
+        strip.background = element_blank(), 
+        plot.background = element_blank(), 
+        complete = TRUE,
+        axis.line = element_line(color = "black", size = 0.25),
+        text = element_text(size = 8),
+        axis.ticks = element_line(color = "black", size = 0.25),
+        axis.title = element_text(size = 8),
+        axis.text = element_text(size = 8),
+        legend.text = element_text(size = 8))
+```
+
+```{r getData}
+if(!file.exists("1-s2.0-S0092867418303854-mmc4.xlsx")){
+    download.file(
+        url = "https://ars.els-cdn.com/content/image/1-s2.0-S0092867418303854-mmc4.xlsx",
+        destfile = "1-s2.0-S0092867418303854-mmc4.xlsx",
+        mode = "wb")
+}
+
+supp_tab_becher_s4 <- read_xlsx("1-s2.0-S0092867418303854-mmc4.xlsx",
+                                sheet = "TableS4_TPP-TR")
+temperature_anno <- 
+    as.numeric(
+        gsub("T", "", gsub("_.+", "", colnames(
+            supp_tab_becher_s4 %>% 
+                dplyr::select(matches("mean\\.fc"))))))
+
+g1s_df <- supp_tab_becher_s4 %>% 
+    filter(cell.cycle == "G1_S") %>% 
+    dplyr::select(
+        gene_name,
+        replicates = found.in.reps,
+        max_qupm = max.qupm,
+        min_qupm = min.qupm,
+        matches("mean\\.fc")) %>% 
+    filter(min_qupm > 3,
+           replicates == 3)
+
+m_df <- supp_tab_becher_s4 %>% 
+    filter(cell.cycle == "M") %>% 
+    dplyr::select(
+        gene_name,
+        replicates = found.in.reps,
+        max_qupm = max.qupm,
+        min_qupm = min.qupm,
+        matches("mean\\.fc")) %>% 
+    filter(min_qupm > 3,
+           replicates == 3)
+```
+
+```{r prepareData}
+g1s_mat <- as.matrix(
+    g1s_df %>% dplyr::select(dplyr::matches("mean\\.fc"))
+    )
+rownames(g1s_mat) <- g1s_df$gene_name
+attributes(g1s_mat)$temperature <- temperature_anno
+
+m_mat <- as.matrix(
+    m_df %>% dplyr::select(dplyr::matches("mean\\.fc"))
+    )
+rownames(m_mat) <- m_df$gene_name
+attributes(m_mat)$temperature <- temperature_anno
+```
+
+```{r tpca}
+data("ori_et_al_complexes_df")
+
+G1S_TPCA <- runTPCA(
+    objList = list(g1s_mat),
+    complexAnno = ori_et_al_complexes_df)
+
+M_TPCA <- runTPCA(
+    objList = list(m_mat),
+    complexAnno = ori_et_al_complexes_df)
+```
+
+```{r diffTpca}
+g1s_significant_complex_comelting <- 
+    filter(tpcaResultTable(G1S_TPCA), p_adj < 0.1)$complex_name
+m_significant_complex_comelting <- 
+    filter(tpcaResultTable(M_TPCA), p_adj < 0.1)$complex_name
+all_significant_complex_comelting <- 
+    unique(c(g1s_significant_complex_comelting, 
+             m_significant_complex_comelting))
+
+data("ori_et_al_complex_ppis")
+filtered_complex_ppis <- ori_et_al_complex_ppis %>% 
+    filter(complex_name %in% all_significant_complex_comelting) 
+
+M_vs_G1S_diff_TPCA <- runDiffTPCA(
+    objList = list(g1s_mat),
+    contrastList = list(m_mat),
+    ctrlCondName = "G1/S",
+    contrastCondName = "M",
+    ppiAnno = filtered_complex_ppis, 
+    n = 10^6
+)
+```
+
+
+```{r plot, fig.width=5, fig.asp=0.45}
+roc_curve <- plotComplexRoc(G1S_TPCA, computeAUC = FALSE) +
+    ggtitle("ROC protein complexes G1/S") +
+    geom_text(aes(x, y), size = 3,
+              label = "AUC = 0.75",
+              data = tibble(x = 0.75, y = 0.25)) +
+    theme_poster
+
+hit_example <- plotPPiProfiles(M_vs_G1S_diff_TPCA, splinesDf = 5,
+                               pair = c("NUP205", "RANBP2")) +
+    labs(x = expression("Temperature"* " " * "("*~degree*C*")"),
+         y = "Franction non-denatured") +
+    theme_poster +
+    theme(legend.position = "bottom")
+
+hit_legend <- get_legend(hit_example)
+
+diff_volcano <- plotDiffTpcaVolcano(M_vs_G1S_diff_TPCA) +
+    geom_segment(
+        aes(x = sqrt(valueC1)-sqrt(valueC2) + 0.05, 
+            y = -log10(p_value) - 0.5,
+            xend = sqrt(valueC1)-sqrt(valueC2) + 0.025, 
+            yend = -log10(p_value) - 0.15),
+        arrow = arrow(length = unit(0.03, "npc")),
+        data = filter(diffTpcaResultTable(M_vs_G1S_diff_TPCA), 
+                      pair == "NUP205:RANBP2")) +
+    ggtitle("Differential PPIs G1/S vs. M") +
+    theme_poster
+    
+plot_grid(roc_curve, 
+          hit_example + theme(legend.position = "none"),
+          diff_volcano, 
+          NULL, hit_legend, NULL, 
+          ncol = 3, rel_heights = c(9, 1))
+
+ggsave(filename = "rtpca-tr_example.pdf", width = 6.25, 
+       height = 2.25, units = "in")
+```
