@@ -117,12 +117,14 @@ y_label <- "Fraction non-denatured"
 
 null_plot <- 
     ggplot(hdac6_null_fit_param$modelPredictions %>% 
-               mutate(group = hdac6_df$Condition), 
+               mutate(group = hdac6_df$Condition) %>% 
+               mutate(Replicate = rep(as.factor(c(1:2, 1:2)), 
+                                      each = 10)), 
            aes(x, y)) +
-    geom_point(aes(color = group)) +
+    geom_point(aes(color = group, shape = Replicate)) +
     geom_line(aes(temperature, y_hat), 
               data = hdac6_null_fit_df,
-              color = "darkgray") +
+              color = "gray40") +
     # geom_text(data = tibble(),
     #           aes(x = 60, y = 0.95),
     #               label = as.expression(
@@ -131,16 +133,18 @@ null_plot <-
     #           size = 2.5) +
     geom_segment(aes(xend = x, yend = .fitted), 
                  linetype = "dashed") +
-    scale_color_manual("", values = c("firebrick", "gray")) +
+    scale_color_manual("", values = c("darkorange", "gray")) +
     labs(x = x_label,
          y = y_label) +
     ggtitle("Null model") +
     theme(legend.position = "bottom")
 
 alt_plot <- 
-    ggplot(hdac6_alt_fit_param$modelPredictions, 
+    ggplot(hdac6_alt_fit_param$modelPredictions %>% 
+               mutate(Replicate = rep(as.factor(c(1:2, 1:2)), 
+                                      each = 10)), 
        aes(x, y)) +
-    geom_point(aes(color = group)) +
+    geom_point(aes(color = group, shape = Replicate)) +
     geom_line(aes(temperature, y_hat, color = group), 
               data = hdac6_alt_fit_df) +
     # geom_text(data = tibble(),
@@ -151,7 +155,7 @@ alt_plot <-
     #           size = 2.5) +
     geom_segment(aes(xend = x, yend = .fitted), 
                  linetype = "dashed") +
-    scale_color_manual("", values = c("firebrick", "gray")) +
+    scale_color_manual("", values = c("darkorange", "gray")) +
     labs(x = x_label,
          y = y_label) +
     ggtitle("Alternative model") +
@@ -219,19 +223,20 @@ nparc_volcano <-
 melt_legend <- get_legend(null_plot)
 
 plot_grid(
-    plot_grid(
+    #plot_grid(
         plot_grid(
             null_plot + theme(legend.position = "none"), 
             alt_plot + theme(legend.position = "none")), 
-        nparc_volcano,
-        rel_widths = c(2, 1),
-        ncol = 2),
-    plot_grid(melt_legend, NULL, 
-              ncol = 2, rel_widths = c(2, 1)),
+     #   nparc_volcano,
+     #   rel_widths = c(2, 1),
+     #   ncol = 2),
+    #plot_grid(
+        melt_legend, #NULL, 
+              #ncol = 2, rel_widths = c(2, 1)),
     ncol = 1, rel_heights = c(9, 1)
 )
 
-ggsave(filename = "nparc-tr_example.pdf", width = 5, 
+ggsave(filename = "nparc-tr_example_new.pdf", width = 3.75, 
        height = 2.25, units = "in")
 ```
 
