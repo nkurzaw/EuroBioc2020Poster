@@ -163,7 +163,7 @@
   \noindent
   \begin{minipage}[t]{\textwidth}
     \vspace{.15cm}
-    \section*{\huge Summary}
+    %\section*{\huge Summary}
     \large 
       Thermal proteome profiling (TPP) is a mass spectrometry-based 
       technology which was originally developed to identify drug (off)
@@ -222,54 +222,64 @@
   \vspace{0.5cm}
   \section*{\huge Thermal Proteome Profiling (TPP)}
   \subsection*{TPP over a temperature range (TPP-TR) \cite{savitski_2014}}
-  
   \includegraphics[width=\linewidth]{figs/tpp-tr_schematic.png}
-
   \subsection*{Ligand dose and temperature range TPP (2D-TPP) \cite{becher_2016}}
-  
   \includegraphics[width=\linewidth]{figs/2d-tpp_schematic.png}
-\end{minipage}
+%\end{minipage}
 
 %\vspace{-2cm}
 % ---------------------------------------------------------------------------
 % TPP 
-\noindent
-\begin{minipage}[t]{\linewidth}
-  \vspace{0.55cm}
-  \section*{\huge TPP-TR analysis with \hcode{TPP}}
+%\noindent
+%\begin{minipage}[t]{\linewidth}
+ % \vspace{0.55cm}
+  \section*{\huge TPP-TR analysis with \hcode{TPP} \cite{franken_2015}}
   Melting point-centric data analysis.
-  \begin{center}
+
+  \begin{minipage}{0.6\linewidth}
+  %\begin{center}
   \includegraphics[width=\linewidth]{figs/tpp-tr_example.png}
-  \end{center}
+  %\end{center}
+  \end{minipage}%
+  \begin{minipage}{0.4\linewidth}
+
   \textbf{Features of the \hcode{TPP} package}:
 
   \begin{itemize}
 
   \item TPP-TR data import into ExpressionSet structure
   \item data normalization and melting curve fitting, detection of melting point shifts
+  \item analysis of isothermal concentartion range TPP experiments
   
   \end{itemize}
-\end{minipage}
+  \end{minipage}
+%\end{minipage}
 
 % ---------------------------------------------------------------------------
 % NPARC
-\noindent
-\begin{minipage}[t]{\linewidth}
-  \vspace{0.55cm}
-  \section*{\huge TPP-TR analysis with \hcode{NPARC}}
-  Nonparametric analysis of response curves comparing exploiting all measurements. 
-  \begin{center}
-  \includegraphics[width=\linewidth]{figs/nparc-tr_example.png}
-  \end{center}
+%\noindent
+%\begin{minipage}[ht]{\linewidth}
+%  \vspace{0.55cm}
+  \section*{\huge TPP-TR analysis with \hcode{NPARC} \cite{childs_2019}}
+  Nonparametric analysis of response curves comparing exploiting all measurements.  
+
+  \begin{minipage}{0.6\linewidth}
+  %\begin{center}
+  \includegraphics[width=\linewidth]{figs/nparc-tr_example_new.png}
+  \end{minipage}%
+  \begin{minipage}{0.4\linewidth}
+  %\end{center}
   \textbf{Features of the \hcode{NPARC} package}:
-
+% 
   \begin{itemize}
-
+%
   \item light-weight package for performing sensitive differential melting curve analysis
-  \item nested model comparison: one sigmoidal across conditions with sigmoidals per condition
-  \item implements calibration strategy for retrieved $F$-statistics
-
+  \item nested model comparison: one sigmoidal across conditions vs. sigmoidals per condition
+  \item $F$-statistic based on explained variance of each model
+  \item method for calibration of retrieved $F$-statistics
+%
   \end{itemize}
+  \end{minipage}
 \end{minipage}
 
 
@@ -278,34 +288,18 @@
 \noindent
 \begin{minipage}[t]{\linewidth}
   \vspace{0.55cm}
-  \section*{\huge Detecting differential PPIs with \hcode{Rtpca}}
-  
-  \hcode{scpdata} disseminates curated SCP data sets for method 
-  development and benchmarking.
-  \vspace{0.1cm}
-  
-    % latex table generated in R 4.1.0 by xtable 1.8-4 package
-    % Wed Oct 21 11:44:14 2020
-    \centering
-    \scriptsize
-    \begin{tabular}{rllllr}
-      \hline
-     & Title & Description & Species & Date & \# Assays \\ 
-      \hline
-    1 & specht2019v2 & Specht et al. 2019: macrophage... & Homo sapiens & 2019-12-05 & 179 \\ 
-      2 & specht2019v3 & Specht et al. 2019: macrophage... & Homo sapiens & 2019-10-04 & 179 \\ 
-      3 & dou2019\_lysates & Dou et al. 2019: HeLa lysates
-    ... & Homo sapiens & 2019-10-15 &   3 \\ 
-      4 & dou2019\_mouse & Dou et al. 2019: single cells ... & Mus musculus & 2019-10-15 &  13 \\ 
-      5 & dou2019\_boosting & Dou et al. 2019: testing boost... & Mus musculus & 2019-10-15 &   7 \\ 
-      6 & zhu2018MCP & Zhu et al. 2018 (Mol. Cel. Pro... & Rattus norvegicus & 2018-09-01 &   1 \\ 
-      7 & zhu2018NC\_hela & Zhu et al. 2018 (Nat. Comm.): ... & Homo sapiens & 2018-02-28 &   1 \\ 
-      8 & zhu2018NC\_lysates & Zhu et al. 2018 (Nat. Comm.): ... & Homo sapiens & 2018-02-28 &   1 \\ 
-      9 & zhu2018NC\_islets & Zhu et al. 2018 (Nat. Comm.): ... & Homo sapiens & 2018-02-28 &   1 \\ 
-      10 & cong2020AC & Cong et al. 2020 (Ana. Chem.):... & Homo sapiens & 2020-01-02 &   9 \\ 
-      11 & zhu2019EL & Zhu et al. 2019 (eLife): chick... & Gallus gallus & 2020-11-04 &  62 \\ 
-       \hline
-    \end{tabular}
+  \section*{\huge Detecting differential PPIs with \hcode{Rtpca} \cite{kurzawa_2020}}
+  Detecting (differential) thermal co-aggregation of interacting proteins.
+  \begin{center}
+  \includegraphics[width=\linewidth]{figs/rtpca-tr_example.png}
+  \end{center}
+  \textbf{Features of the \hcode{Rtpca} package}:
+  \begin{itemize}
+%
+  \item test for co-aggregation of annotated protein-protein interactors (PPI), compute receiver operating characteristics (ROC)
+  \item perform differential testing to find changes in PPIs between different conditions
+%
+  \end{itemize}
 \end{minipage}
 
 
@@ -315,19 +309,27 @@
 \noindent
 \begin{minipage}[t]{\linewidth}
   \vspace{0.55cm}
-  \section*{\huge 2D-TPP data analysis with \hcode{TPP2D}}
+  \section*{\huge 2D-TPP data analysis with \hcode{TPP2D} \cite{kurzawa_2020a}}
   FDR-controlled detection of ligand-protein interactions from 2D thermal profiles.
   
+  \begin{center}
+  \includegraphics[width=\linewidth]{figs/tpp2d_example.png}
+  \end{center}
+
+  \begin{minipage}{0.4\linewidth}
+  \includegraphics[width=\linewidth]{figs/tpp2d_volcano.png}
+  \end{minipage}%
+  \begin{minipage}{0.6\linewidth}
+  \textbf{Features of the \hcode{TPP2D} package}:
+% 
   \begin{itemize}
-    \item The analysis by Specht et al. \cite{Specht2020-jm}: 
-    \textbf{multiplexed} quantification of 1018 single-cells, either 
-    human macropages or monocytes. \textbf{\color{OliveGreen}{Good 
-    documentation}} allowed for good replication.
-    \item Label-free SCP analysis by Zhu et al. \cite{Zhu2019-ja}: 
-    \textbf{label-free} quantification of 28 single-cells from chicken 
-    utricles. \textbf{\color{BrickRed}{Poor documentation}} did not 
-    allow for replication.
+%
+  \item hypothesis test on curves: intercept model vs. dose-response model contrained across temperatures
+  \item bootstrapping approach to calibrate $F$-statistic in terms of false discovery-rate (FDR)
+  \item several functions for data visualization
+%
   \end{itemize}
+  \end{minipage}
   
 \end{minipage}
 
