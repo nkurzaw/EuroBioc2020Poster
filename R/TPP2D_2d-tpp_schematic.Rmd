@@ -88,11 +88,10 @@ jq1_lys_df <- recomputeSignalFromRatios(jq1_lys_fil)
 Compute null and alternative model fits and extract parameters
 ```{r eval=reRun}
 jq1_params_df <- getModelParamsDf(jq1_lys_df, maxit = 500)
-saveRDS(jq1_params_df, file = "../pre_run_data/jq1_params_df.rds")
 ```
 
 ```{r eval=!reRun, echo=FALSE}
-jq1_params_df <- readRDS("../pre_run_data/jq1_params_df.rds")
+jq1_params_df <- readRDS("prerun/jq1_params_df.rds")
 ```
 
 Compute *F*-statistics
@@ -108,11 +107,10 @@ jq1_null_df <- bootstrapNullAlternativeModel(
   maxit = 500, B = 100,
   BPPARAM = BiocParallel::MulticoreParam(workers = 20, progressbar = TRUE),
   verbose = FALSE)
-saveRDS(jq1_null_df, file = "../pre_run_data/jq1_null_df.rds")
 ```
 
 ```{r eval=!reRun, echo=FALSE}
-jq1_null_df <- readRDS("../pre_run_data/jq1_null_df.rds")
+jq1_null_df <- readRDS("prerun/jq1_null_df.rds")
 ```
 
 Compute FDR and find hits:
@@ -125,7 +123,30 @@ jq1_fdr_df <- getFDR(df_out = jq1_fstat_df,
 jq1_hits_df <- findHits(jq1_fdr_df, alpha = 0.1)
 ```
 
-```{r}
+```{r schematic}
+x_label <- expression('-log'[10]~'(JQ1 conc.)')
+y_label <- expression('log'[2]~'(intensity)')
+plot_grid(
+    plot2dTppFit(jq1_lys_df, "BRD4", "H0", 
+                 fit_color = "#e7298a",
+                 xlab = x_label) +
+        facet_wrap(~temperature, ncol = 10) + 
+      ggtitle("Null model BRD4") +
+      scale_y_continuous(y_label, breaks = seq(22, 28, 2)) +
+      theme_poster,
+    plot2dTppFit(jq1_lys_df, "BRD4", "H1", 
+                 fit_color = "#66a61e",
+                 xlab = x_label,
+                 ylab = y_label) +
+        facet_wrap(~temperature, ncol = 10) + 
+      ggtitle("Alternative model BRD4") +
+      theme_poster,
+    ncol = 1
+)
+ggsave(filename = "tpp2d_example.pdf", width = 6.25, 
+       height = 2.75, units = "in")
+```
+```{r volcano}
 ggplot(jq1_fdr_df %>% 
            filter(dataset == "true") %>% 
            mutate(group = case_when(slopeH1 > 0 ~ "stabilized protein",
@@ -140,41 +161,18 @@ ggplot(jq1_fdr_df %>%
                      slopeH1 < 0 ~ "destabilized protein"))) + 
   ggrepel::geom_text_repel(
     aes(label = clustername),
-    data = jq1_hits_df, 
+    data = jq1_hits_df %>% filter(clustername == "BRD4"), 
     size = 2, segment.size = 0.2, min.segment.length = unit(2, "pt")) +
   scale_color_manual("", values = c("steelblue", "orange")) +
   labs(x = bquote(sign(kappa) %.% sqrt(~'RSS'^0~' - RSS'^1~'')),
        y = expression('log'[2]~'('*italic(F)*'-statistic + 1)')) +
-  ggtitle("JQ1 lysate experiment") +
+  #ggtitle("JQ1 lysate experiment") +
   coord_cartesian(xlim = c(-5, 5), 
                   ylim = c(0, 6.5)) +
-  theme_paper +
-  theme(legend.position = "bottom")
-```
+  theme_poster +
+  theme(legend.position = "none")
 
-
-
-```{r schematic}
-x_label <- expression('-log'[10]~'(drug conc.)')
-y_label <- expression('log'[2]~'(intensity)')
-plot_grid(
-    plot2dTppFit(jq1_lys_df, "BRD4", "H0", 
-                 fit_color = "#e7298a",
-                 xlab = x_label) +
-        facet_wrap(~temperature, ncol = 10) + 
-      ggtitle("Null model") +
-      scale_y_continuous(y_label, breaks = seq(22, 28, 2)) +
-      theme_poster,
-    plot2dTppFit(jq1_lys_df, "BRD4", "H1", 
-                 fit_color = "#66a61e",
-                 xlab = x_label,
-                 ylab = y_label) +
-        facet_wrap(~temperature, ncol = 10) + 
-      ggtitle("Alternative model") +
-      theme_poster,
-    ncol = 1
-)
-ggsave(filename = "tpp2d_example.pdf", width = 6.25, 
+ggsave(filename = "tpp2d_volcano.pdf", width = 2.75, 
        height = 2.75, units = "in")
 ```
 

@@ -61,7 +61,7 @@ hdac6_df <- bind_rows(
 ggplot(hdac6_df, aes(temperature, value)) +
     geom_point(aes(color = Condition, shape = Replicate)) +
     geom_smooth(aes(group = id),
-              color = c(rep("firebrick", 160),
+              color = c(rep("darkorange", 160),
                         rep("gray", 160)),
               method = "nls", se = FALSE,
               formula = y ~ (1-a)/(1 + exp(-(b/x - c))) + a,
@@ -72,12 +72,15 @@ ggplot(hdac6_df, aes(temperature, value)) +
                  arrow = arrow(length = unit(0.03, "npc"))) +
     geom_segment(x = 52.25, xend = 49.25, y = 0.5, yend = 0.5, 
                  arrow = arrow(length = unit(0.03, "npc"))) +
-    scale_color_manual(values = c("firebrick", "gray")) +
+    geom_text(x = 60, y = 0.75, label = "HDAC6", 
+              data = tibble(x = 1)) +
+    scale_color_manual("", values = c("darkorange", "gray")) +
     labs(x = expression("Temperature"* " " * "("*~degree*C*")"),
          y = "Fraction non-denatured") +
-    theme_poster 
+    theme_poster +
+    theme(legend.position = "bottom")
 
-ggsave(filename = "tpp-tr_example.pdf", width = 5, 
-       height = 2.25, units = "in")
+ggsave(filename = "tpp-tr_example.pdf", width = 3.75, 
+       height = 2.5, units = "in")
 ```
 

@@ -136,7 +136,7 @@ null_plot <-
     scale_color_manual("", values = c("darkorange", "gray")) +
     labs(x = x_label,
          y = y_label) +
-    ggtitle("Null model") +
+    ggtitle("Null model HDAC6") +
     theme(legend.position = "bottom")
 
 alt_plot <- 
@@ -158,7 +158,7 @@ alt_plot <-
     scale_color_manual("", values = c("darkorange", "gray")) +
     labs(x = x_label,
          y = y_label) +
-    ggtitle("Alternative model") +
+    ggtitle("Alternative model HDAC6") +
     theme(legend.position = "bottom")
 
 ```
